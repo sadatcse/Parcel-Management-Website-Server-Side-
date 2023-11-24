@@ -27,14 +27,18 @@ async function run() {
  
     const userCollection = client.db('Curier').collection('User');
 
+    app.post('/users', async (req, res) => {
+      const newUser = req.body;
+      const existingUser = await userCollection.findOne({ email: newUser.email });
+      console.log(newuser);
+      if (existingUser) {
+        return res.status(400).send('Email already exists');
+      }
+      const result = await userCollection.insertOne(newUser);
+      res.send(result);
+    });
 
 
-  app.post('/users', async (req, res) => {
-    const newuser =req.body;
-    console.log(newuser);
-    const result =await userCollection.insertOne(newuser);
-    res.send(result);
-  })
 
   app.get('/users', async (req, res) => {
     const cursor = userCollection.find();
