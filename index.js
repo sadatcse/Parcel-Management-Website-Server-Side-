@@ -29,14 +29,43 @@ async function run() {
 
     app.post('/users', async (req, res) => {
       const newUser = req.body;
+      newUser.role = 'user';
+      
+      console.log(newUser);
       const existingUser = await userCollection.findOne({ email: newUser.email });
-      console.log(newuser);
+      
       if (existingUser) {
-        return res.status(400).send('Email already exists');
+        console.log('user already');
+        return res.status(200).send('Email already exists');
       }
+      
       const result = await userCollection.insertOne(newUser);
       res.send(result);
     });
+
+    app.patch('/users/:role/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const role = req.params.role;
+        const filter = { _id: new ObjectId(id) };
+        const updatedDoc = {
+          $set: {
+            role: role
+          }
+        };
+        const result = await userCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      } catch (err) {
+        res.status(500).send(err.message);
+      }
+    });
+
+    app.delete('/users/:id',async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    })
 
 
 
