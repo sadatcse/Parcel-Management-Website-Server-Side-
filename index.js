@@ -28,11 +28,39 @@ async function run() {
  
     const userCollection = client.db('Curier').collection('User');
     const ParcelCollection = client.db('Curier').collection('Parcel');
+    const ReviewCollection = client.db('Curier').collection('Review');
+
     // app.post('/jwt', async (req, res) => {
     //   const user = req.body;
     //   const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
     //   res.send({ token });
     // })
+
+    app.get('/reviews', async (req, res) => {
+      const cursor = ReviewCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+  })
+
+  app.get('/reviews/:user/:email', async (req, res) => {
+    try {
+      const email = req.params.email;
+      const role = req.params.user;
+      const filter = { [`${role}.email`]: email };
+      const parcels = await ReviewCollection.find(filter).toArray();
+      res.send(parcels);
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+  });
+
+  app.post('/reviews', async (req, res) => {
+    const item = req.body;
+    console.log(item);
+    const result = await ReviewCollection.insertOne(item);
+    res.send(result);
+  });
+
 
     app.post('/parcels', async (req, res) => {
       const item = req.body;
