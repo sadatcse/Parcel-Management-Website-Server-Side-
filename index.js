@@ -30,6 +30,38 @@ async function run() {
     const ParcelCollection = client.db('Curier').collection('Parcel');
     const ReviewCollection = client.db('Curier').collection('Review');
 
+    app.patch('/users/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const updatedUser = { ...req.body };
+        delete updatedUser._id;
+        console.log('Filter:', filter); 
+        console.log('Updated User:', updatedUser);
+    
+        if (Object.keys(updatedUser).length === 0) {
+          return res.status(400).json({ error: 'No fields to update provided' });
+        }
+        const result = await userCollection.updateOne(filter, { $set: updatedUser });
+    
+        console.log('Update Result:', result); 
+    
+        if (result.matchedCount === 0) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+    
+        if (result.modifiedCount === 1) {
+          return res.json({ message: 'User updated successfully' });
+        } else {
+          return res.status(500).json({ error: 'Failed to update user' });
+        }
+      } catch (error) {
+        console.error('Server Error:', error); 
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+    
+
     app.get('/parceldata', async (req, res) => {
       try {
         const aggregationPipeline = [
@@ -82,6 +114,12 @@ async function run() {
 
     app.get('/reviews', async (req, res) => {
       const cursor = ReviewCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    app.get('/alldeliveryman', async (req, res) => {
+      const cursor = userCollection.find({ "role": "deliveryman" });
       const result = await cursor.toArray();
       res.send(result);
     })
@@ -225,15 +263,9 @@ async function run() {
     app.post('/users', async (req, res) => {
       const newUser = req.body;
       newUser.role = 'user';
-
       console.log(newUser);
       const existingUser = await userCollection.findOne({ email: newUser.email });
-
-      if (existingUser) {
-        console.log('user already');
-        return res.status(200).send('Email already exists');
-      }
-
+      if (existingUser) {console.log('user already');return res.status(200).send('Email already exists');}
       const result = await userCollection.insertOne(newUser);
       res.send(result);
     });
@@ -287,6 +319,8 @@ async function run() {
       const result = await userCollection.deleteOne(query);
       res.send(result);
     })
+
+
 
 
 
